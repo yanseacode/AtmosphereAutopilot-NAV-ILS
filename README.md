@@ -1,8 +1,8 @@
 # AtmosphereAutopilot NAV/ILS
 
-Navigation is a navigation and approach controller for AtmosphereAutopilot. Its release goal is to reproduce Kramax AutoPilot's familiar flight-plan, NAV, ILS, and mode workflow while using AtmosphereAutopilot's adaptive flight controls.
+AtmosphereAutopilot NAV/ILS is a navigation and approach controller for AtmosphereAutopilot. Its release goal is to reproduce Kramax AutoPilot's familiar flight-plan, NAV, ILS, and mode workflow while using AtmosphereAutopilot's adaptive flight controls.
 
-> **Development release:** Navigation is approaching public flight testing. Keep backups of craft and save files, and complete initial tests with stable aircraft at safe altitude.
+> **Development release:** AtmosphereAutopilot NAV/ILS is approaching public flight testing. Keep backups of craft and save files, and complete initial tests with stable aircraft at safe altitude.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ Navigation is a navigation and approach controller for AtmosphereAutopilot. Its 
 
 1. Download the current development package from the repository's Releases page.
 2. Copy its `GameData/AtmosphereAutopilotNav` directory into the KSP installation's `GameData` directory.
-3. Keep AtmosphereAutopilot installed. Kramax plans are read from `GameData/KramaxAutoPilot/DefaultFlightPlans.cfg` and `FlightPlans.cfg` when present.
+3. Keep AtmosphereAutopilot and Kramax Autopilot installed. Kramax plans are read from `GameData/KramaxAutoPilot/DefaultFlightPlans.cfg` and `FlightPlans.cfg` when present.
 4. Start KSP and open **Navigation** from AtmosphereAutopilot's module manager.
 
 The current 0.6.0 development build connects the Kramax-style Bank, Heading, NAV, Pitch, Vertical Speed, Altitude, Radar Altitude, GS, Velocity, Acceleration, and Landing-speed modes to AtmosphereAutopilot's adaptive controllers. When Kramax is installed, Navigation reads `DefaultFlightPlans.cfg` followed by `FlightPlans.cfg`, applies user-plan name overrides in the same order, and exposes those plans in its own flight-plan manager. The manager can update or rename the active plan in Kramax's user-plan file, with a backup made before replacement. It does not link to or call the Kramax plugin.
@@ -31,6 +31,4 @@ See `TESTING.md` for the current flight test and `KRAMAX_PARITY.md` for the rele
 
 ## License and data
 
-Navigation is licensed under GPL-3.0-or-later. AtmosphereAutopilot and Kramax AutoPilot remain separate projects. See `PROVENANCE.md` for the code and flight-plan data boundary.
-
-Target fields are pending edits: typing or pressing +/− does not change guidance until the target button to the left is clicked. Approach speeds follow the same rule. Drag the bars below Roll, Vertical, or Auto-Throttle upward/downward to hide/show the mode row.
+AtmosphereAutopilot NAV/ILS is licensed under GPL-3.0-or-later. AtmosphereAutopilot and Kramax AutoPilot remain separate projects. See `PROVENANCE.md` for the code and flight-plan data boundary.
