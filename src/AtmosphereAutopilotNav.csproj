@@ -1,0 +1,31 @@
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration>Release</Configuration>
+    <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>7.3</LangVersion>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <OutputPath>..\artifacts\</OutputPath>
+    <KSPRoot>$(MSBuildThisFileDirectory)..\..\</KSPRoot>
+    <AssemblyName>AtmosphereAutopilotNav</AssemblyName>
+    <RootNamespace>AtmosphereAutopilotNav</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\UnityEngine.TextRenderingModule.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\UnityEngine.UIModule.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\Assembly-CSharp.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\UnityEngine.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\UnityEngine.CoreModule.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll"><Private>False</Private></Reference>
+    <Reference Include="$(KSPRoot)GameData\AtmosphereAutopilot\AtmosphereAutopilot.dll"><Private>False</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Core\**\*.cs" />
+    <Compile Include="Ksp\**\*.cs" />
+    <Compile Include="Plugin\**\*.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

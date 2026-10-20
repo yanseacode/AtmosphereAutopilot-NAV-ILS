@@ -1,0 +1,36 @@
+# AtmosphereAutopilot NAV/ILS
+
+Navigation is a navigation and approach controller for AtmosphereAutopilot. Its release goal is to reproduce Kramax AutoPilot's familiar flight-plan, NAV, ILS, and mode workflow while using AtmosphereAutopilot's adaptive flight controls.
+
+> **Development release:** Navigation is approaching public flight testing. Keep backups of craft and save files, and complete initial tests with stable aircraft at safe altitude.
+
+## Requirements
+
+- Kerbal Space Program 1.12.x
+- [AtmosphereAutopilot](https://github.com/Boris-Barboris/AtmosphereAutopilot)
+- Kramax AutoPilot flight-plan files are currently used as the airport database. Kramax does not need to control the aircraft and Navigation does not link to its plugin.
+
+## Installation
+
+1. Download the current development package from the repository's Releases page.
+2. Copy its `GameData/AtmosphereAutopilotNav` directory into the KSP installation's `GameData` directory.
+3. Keep AtmosphereAutopilot installed. Kramax plans are read from `GameData/KramaxAutoPilot/DefaultFlightPlans.cfg` and `FlightPlans.cfg` when present.
+4. Start KSP and open **Navigation** from AtmosphereAutopilot's module manager.
+
+The current 0.6.0 development build connects the Kramax-style Bank, Heading, NAV, Pitch, Vertical Speed, Altitude, Radar Altitude, GS, Velocity, Acceleration, and Landing-speed modes to AtmosphereAutopilot's adaptive controllers. When Kramax is installed, Navigation reads `DefaultFlightPlans.cfg` followed by `FlightPlans.cfg`, applies user-plan name overrides in the same order, and exposes those plans in its own flight-plan manager. The manager can update or rename the active plan in Kramax's user-plan file, with a backup made before replacement. It does not link to or call the Kramax plugin.
+
+NAV and GS now share one active plan leg, as they do in Kramax. Waypoint flags `Vertical`, `IAF`, `FAF`, `RW`, and `Stop` retain their Kramax meanings. Direct-to normally begins at the aircraft's present position, while direct-to FAF or runway preserves the published inbound leg. A leg must become valid before it can auto-sequence, and approach-critical legs are protected from early capture.
+
+AA owns the control lifecycle. With guidance off, the controller delegates to AA fly-by-wire. NAV, vertical guidance, and speed control use AA's flight model and adaptive controllers. Landing-speed mode selects the configured IAF, FAF, or final speed from the active plan phase. The development build hands the aircraft back to FBW at 150 m radar altitude on the runway leg whether NAV, GS, or landing-speed guidance is active; flare, touchdown, braking, steering, and reversers remain manual.
+
+## Building and testing
+
+Run `build.ps1` from PowerShell to build and validate the plugin. Output is written to `artifacts`. The project expects a KSP development checkout at the parent directory, including the KSP managed assemblies and AtmosphereAutopilot DLL used as compile-time references.
+
+See `TESTING.md` for the current flight test and `KRAMAX_PARITY.md` for the release checklist. Please include `KSP.log`, the aircraft used, selected plan, active modes, and reproduction steps with a flight-control report.
+
+## License and data
+
+Navigation is licensed under GPL-3.0-or-later. AtmosphereAutopilot and Kramax AutoPilot remain separate projects. See `PROVENANCE.md` for the code and flight-plan data boundary.
+
+Target fields are pending edits: typing or pressing +/− does not change guidance until the target button to the left is clicked. Approach speeds follow the same rule. Drag the bars below Roll, Vertical, or Auto-Throttle upward/downward to hide/show the mode row.
