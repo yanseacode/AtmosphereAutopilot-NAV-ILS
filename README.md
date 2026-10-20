@@ -8,16 +8,17 @@ AtmosphereAutopilot NAV/ILS is a navigation and approach controller for Atmosphe
 
 - Kerbal Space Program 1.12.x
 - [AtmosphereAutopilot](https://github.com/Boris-Barboris/AtmosphereAutopilot)
-- Kramax AutoPilot flight-plan files are currently used as the airport database. Kramax does not need to control the aircraft and Navigation does not link to its plugin.
+- [Kramax AutoPilot Continued](https://github.com/linuxgurugamer/KramaxAutoPilot)
+  - Kramax AutoPilot flight-plan files are currently used as the airport database. Kramax does not need to control the aircraft and AtmosphereAutopilot NAV/ILS does not link to its plugin.
 
 ## Installation
 
 1. Download the current development package from the repository's Releases page.
 2. Copy its `GameData/AtmosphereAutopilotNav` directory into the KSP installation's `GameData` directory.
 3. Keep AtmosphereAutopilot and Kramax Autopilot installed. Kramax plans are read from `GameData/KramaxAutoPilot/DefaultFlightPlans.cfg` and `FlightPlans.cfg` when present.
-4. Start KSP and open **Navigation** from AtmosphereAutopilot's module manager.
+4. Start KSP and open **NAV / ILS** from AtmosphereAutopilot's module manager.
 
-The current 0.6.0 development build connects the Kramax-style Bank, Heading, NAV, Pitch, Vertical Speed, Altitude, Radar Altitude, GS, Velocity, Acceleration, and Landing-speed modes to AtmosphereAutopilot's adaptive controllers. When Kramax is installed, Navigation reads `DefaultFlightPlans.cfg` followed by `FlightPlans.cfg`, applies user-plan name overrides in the same order, and exposes those plans in its own flight-plan manager. The manager can update or rename the active plan in Kramax's user-plan file, with a backup made before replacement. It does not link to or call the Kramax plugin.
+The current 0.6.1 development build connects the Kramax-style Bank, Heading, NAV, Pitch, Vertical Speed, Altitude, Radar Altitude, GS, Velocity, Acceleration, and Landing-speed modes to AtmosphereAutopilot's adaptive controllers. When Kramax is installed, AtmosphereAutopilot NAV/ILS reads `DefaultFlightPlans.cfg` followed by `FlightPlans.cfg`, applies user-plan name overrides in the same order, and exposes those plans in its own flight-plan manager. The manager can update or rename the active plan in Kramax's user-plan file, with a backup made before replacement. It does not link to or call the Kramax plugin.
 
 NAV and GS now share one active plan leg, as they do in Kramax. Waypoint flags `Vertical`, `IAF`, `FAF`, `RW`, and `Stop` retain their Kramax meanings. Direct-to normally begins at the aircraft's present position, while direct-to FAF or runway preserves the published inbound leg. A leg must become valid before it can auto-sequence, and approach-critical legs are protected from early capture.
 

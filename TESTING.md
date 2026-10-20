@@ -1,6 +1,6 @@
-# Navigation 0.6.0 interface and plan-store test
+# AtmosphereAutopilot NAV/ILS 0.6.1 interface and plan-store test
 
-Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **Navigation** in AtmosphereAutopilot.
+Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **NAV / ILS** in AtmosphereAutopilot.
 
 ## Main interface
 

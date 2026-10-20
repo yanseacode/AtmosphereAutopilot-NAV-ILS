@@ -97,7 +97,7 @@ namespace AtmosphereAutopilotNav.Plugin
         private GUIStyle greenLabelStyle;
         private readonly DeviationOverlay deviationOverlay = new DeviationOverlay();
         public NavApproachController(Vessel vessel)
-            : base(vessel, "Navigation", 88439961) { }
+            : base(vessel, "NAV / ILS", 88439961) { }
         public override void InitializeDependencies(Dictionary<Type, AutopilotModule> modules)
         {
             director = (DirectorController)modules[typeof(DirectorController)];
