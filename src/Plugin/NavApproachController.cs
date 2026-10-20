@@ -402,8 +402,10 @@ namespace AtmosphereAutopilotNav.Plugin
                 }
                 if (!lastLeg.HasVerticalGuidance)
                     throw new InvalidOperationException("Active Kramax leg has no vertical guidance");
-                targetVerticalSpeed = NavigationMath.Clamp(lastLeg.PathSlope * speed +
-                    (lastLeg.PathAltitudeMeters - vessel.altitude) / 15.0, -0.2 * speed, 0.2 * speed);
+                double glidepathCorrection = (lastLeg.PathAltitudeMeters - vessel.altitude) / 5.0;
+                glidepathCorrection *= glidepathCorrection < 0 ? 1.2 : 0.8;
+                targetVerticalSpeed = NavigationMath.Clamp(lastLeg.PathSlope * speed + glidepathCorrection,
+                    -0.2 * speed, 0.2 * speed);
             }
             if (verticalMode == VerticalGuidanceMode.Altitude)
                 targetVerticalSpeed = NavigationMath.Clamp((altitudeMeters - vessel.altitude) / 15.0,
@@ -416,8 +418,8 @@ namespace AtmosphereAutopilotNav.Plugin
             double dt = TimeWarp.fixedDeltaTime;
             if (!lateralWasActive) commandedTrack = CurrentTrackDegrees();
             if (!verticalWasActive) commandedVerticalSpeed = actualVerticalSpeed;
-            commandedTrack = NavigationMath.SlewAngle(commandedTrack, targetTrack, 4, dt);
-            commandedVerticalSpeed = NavigationMath.MoveTowards(commandedVerticalSpeed, targetVerticalSpeed, 3, dt);
+            commandedTrack = NavigationMath.SlewAngle(commandedTrack, targetTrack, 9, dt);
+            commandedVerticalSpeed = NavigationMath.MoveTowards(commandedVerticalSpeed, targetVerticalSpeed, 10, dt);
             lateralWasActive = lateralActive;
             verticalWasActive = verticalActive;
             bool bankMode = lateralMode == LateralGuidanceMode.Bank;
@@ -453,17 +455,14 @@ namespace AtmosphereAutopilotNav.Plugin
             ControlUtils.neutralize_user_input(state, PITCH);
             ControlUtils.neutralize_user_input(state, ROLL);
             ControlUtils.neutralize_user_input(state, YAW);
-            double oldStrength = director.strength;
             bool oldInverted = director.allow_spine_down;
             try
             {
-                director.strength = Math.Min(oldStrength, 0.35);
                 director.allow_spine_down = false;
                 director.ApplyControl(state, desiredVelocity, levelAcceleration);
             }
             finally
             {
-                director.strength = oldStrength;
                 director.allow_spine_down = oldInverted;
             }
         }
@@ -625,11 +624,13 @@ namespace AtmosphereAutopilotNav.Plugin
             if (now - lastTelemetryTime < 2) return;
             lastTelemetryTime = now;
             string plan = navigator.Plan == null ? "none" : navigator.Plan.Id;
+            double verticalDeviation = hasLeg && lastLeg.HasVerticalGuidance
+                ? vessel.altitude - lastLeg.PathAltitudeMeters : double.NaN;
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[AtmosphereAutopilot NAV/ILS] t={0:F1} plan={1} leg={2} modes={3}/{4}/{5} trackCmd={6:F2} track={7:F2} vsCmd={8:F2} vs={9:F2} speedCmd={10:F1} speed={11:F1} xtk={12:F1} dthr={13:F1} roll={14:F3} pitch={15:F3} yaw={16:F3} throttle={17:F3}",
+                "[AtmosphereAutopilot NAV/ILS] t={0:F1} plan={1} leg={2} modes={3}/{4}/{5} trackCmd={6:F2} track={7:F2} vsCmd={8:F2} vs={9:F2} speedCmd={10:F1} speed={11:F1} xtk={12:F1} vdev={13:F1} dthr={14:F1} roll={15:F3} pitch={16:F3} yaw={17:F3} throttle={18:F3}",
                 now, plan, navigator.TargetIndex, lateralMode, verticalMode, speedEnabled,
                 commandedTrack, CurrentTrackDegrees(), commandedVerticalSpeed, actualVerticalSpeed,
-                commandedSpeedMetersPerSecond, speed, hasLeg ? lastLeg.CrossTrackMeters : 0,
+                commandedSpeedMetersPerSecond, speed, hasLeg ? lastLeg.CrossTrackMeters : 0, verticalDeviation,
                 navigator.Plan != null && !navigator.Complete &&
                     navigator.Plan.Waypoints[navigator.TargetIndex].Role == WaypointRole.Runway && hasLeg
                     ? lastLeg.DistanceToTargetMeters : -1,

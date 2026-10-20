@@ -8,7 +8,7 @@ The release target is a familiar replacement for Kramax AutoPilot's airplane wor
 | Plan manager | Planet, current name/info, refresh, available-plan list, load plan | Implemented for testing |
 | Waypoint table | Active/direct-to, location, altitude, heading, distance, IAF/FAF/Final/RW roles, compact rows without scrollbars | Implemented for testing |
 | Direct-to | Present-position intercept for ordinary fixes; preserve inbound leg for FAF and runway | Implemented in 0.3 |
-| Sequencing | Require a valid leg before sequencing; protect FAF, runway, and stop from early turns | Implemented in 0.3; turn anticipation needs matching |
+| Sequencing | Require a valid leg before sequencing; protect FAF, runway, and stop from early turns | Implemented; Kramax-style 3 deg/s turn anticipation added in 0.6.3 |
 | Lateral modes | Bank, heading, NAV, independent roll enable | Connected in 0.5; Bank requires flight validation |
 | Vertical modes | Pitch, vertical speed, altitude, radar altitude, GS, independent vertical enable | Connected in 0.5; new modes require flight validation |
 | Throttle modes | Velocity, acceleration, landing speed schedule | Connected in 0.5; Acc and Land require flight validation |

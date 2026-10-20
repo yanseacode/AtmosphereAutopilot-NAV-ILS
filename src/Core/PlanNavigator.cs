@@ -157,11 +157,22 @@ namespace AtmosphereAutopilotNav.Core
                 double legLength = NavigationMath.DistanceMeters(fromPosition, to.Position, bodyRadiusMeters);
                 double alongTrack = NavigationMath.AlongTrackMeters(fromPosition, to.Position, position, bodyRadiusMeters);
                 double distance = NavigationMath.DistanceMeters(position, to.Position, bodyRadiusMeters);
+                double course = NavigationMath.InitialBearingDegrees(fromPosition, to.Position);
                 if (alongTrack > 0 && alongTrack < legLength) legWasValid = true;
                 bool protectedApproachLeg = to.Role == WaypointRole.FinalApproachFix ||
                     to.Role == WaypointRole.Runway || to.Role == WaypointRole.Stop;
+                bool passedFix = alongTrack >= legLength - 10;
+                bool timeToTurn = false;
+                if (!protectedApproachLeg && TargetIndex < Plan.Waypoints.Count - 1)
+                {
+                    NavWaypoint after = Plan.Waypoints[TargetIndex + 1];
+                    double nextCourse = NavigationMath.InitialBearingDegrees(to.Position, after.Position);
+                    double leadDistance = NavigationMath.TurnAnticipationDistanceMeters(
+                        groundSpeedMetersPerSecond, course, nextCourse);
+                    timeToTurn = distance <= leadDistance;
+                }
                 if (advance && legWasValid && TargetIndex < Plan.Waypoints.Count - 1 &&
-                    (alongTrack >= legLength - 10 || (!protectedApproachLeg && distance <= captureRadiusMeters)))
+                    (passedFix || timeToTurn))
                 {
                     TargetIndex++;
                     directStart = null;
@@ -170,7 +181,6 @@ namespace AtmosphereAutopilotNav.Core
                     continue;
                 }
 
-                double course = NavigationMath.InitialBearingDegrees(fromPosition, to.Position);
                 double crossTrack = NavigationMath.SignedCrossTrackMeters(fromPosition, to.Position, position, bodyRadiusMeters);
                 double desiredTrack = NavigationMath.InterceptTrackDegrees(course, crossTrack, groundSpeedMetersPerSecond);
                 bool fromHasVertical = !plannedLeg || Plan.Waypoints[TargetIndex - 1].HasVerticalGuidance;

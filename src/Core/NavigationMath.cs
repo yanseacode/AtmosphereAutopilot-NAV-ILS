@@ -82,7 +82,7 @@ namespace AtmosphereAutopilotNav.Core
         }
 
         public static double InterceptTrackDegrees(double legCourseDegrees, double crossTrackMeters,
-            double groundSpeedMetersPerSecond, double interceptTimeSeconds = 15, double maximumInterceptDegrees = 30)
+            double groundSpeedMetersPerSecond, double interceptTimeSeconds = 10, double maximumInterceptDegrees = 30)
         {
             if (!Finite(legCourseDegrees) || !Finite(crossTrackMeters) || !Finite(groundSpeedMetersPerSecond) || groundSpeedMetersPerSecond <= 0 ||
                 !Finite(interceptTimeSeconds) || interceptTimeSeconds <= 0 || !Finite(maximumInterceptDegrees) || maximumInterceptDegrees <= 0 || maximumInterceptDegrees >= 90)
@@ -91,6 +91,17 @@ namespace AtmosphereAutopilotNav.Core
                 -groundSpeedMetersPerSecond * Math.Sin(maximumInterceptDegrees * DegreesToRadians),
                 groundSpeedMetersPerSecond * Math.Sin(maximumInterceptDegrees * DegreesToRadians));
             return Wrap360(legCourseDegrees + Math.Asin(crossVelocity / groundSpeedMetersPerSecond) * RadiansToDegrees);
+        }
+
+        public static double TurnAnticipationDistanceMeters(double groundSpeedMetersPerSecond,
+            double currentCourseDegrees, double nextCourseDegrees, double turnRateDegreesPerSecond = 3)
+        {
+            if (!Finite(groundSpeedMetersPerSecond) || groundSpeedMetersPerSecond < 0 ||
+                !Finite(currentCourseDegrees) || !Finite(nextCourseDegrees) ||
+                !Finite(turnRateDegreesPerSecond) || turnRateDegreesPerSecond <= 0)
+                throw new ArgumentException("Invalid turn-anticipation input");
+            double turnDegrees = Math.Abs(SignedAngle(nextCourseDegrees, currentCourseDegrees));
+            return groundSpeedMetersPerSecond * turnDegrees / turnRateDegreesPerSecond;
         }
 
         public static double GlidepathAltitudeMeters(double thresholdAltitudeMeters, double distanceFromThresholdMeters,

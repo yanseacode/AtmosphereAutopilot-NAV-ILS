@@ -40,6 +40,10 @@ internal static class NavigationCoreTests
             "right-of-course intercept turns left");
         Check(NavigationMath.SignedAngle(NavigationMath.InterceptTrackDegrees(0, leftOfNorth, 100), 0) > 0,
             "left-of-course intercept turns right");
+        Near(NavigationMath.TurnAnticipationDistanceMeters(100, 90, 0), 3000, 1e-9,
+            "standard-rate 90 degree turn anticipation");
+        Near(NavigationMath.TurnAnticipationDistanceMeters(100, 350, 10), 666.6666667, 1e-6,
+            "turn anticipation wraps north");
 
         Near(NavigationMath.GlidepathAltitudeMeters(70, 10000, 3), 70 + Math.Tan(3 * Math.PI / 180) * 10000, 1e-9, "glidepath altitude");
         Check(NavigationMath.GlidepathVerticalSpeed(600, 600, 100, 3) < 0, "on-path glideslope descends");
@@ -77,13 +81,26 @@ internal static class NavigationCoreTests
         LegGuidance leg = navigator.Update(new GeoPoint(0.1, 0.5, 1100), 100, kerbinRadius, 100);
         Check(leg.TargetIndex == 1 && leg.FromId == "Present" && leg.ToId == "B",
             "ordinary direct-to starts at present position");
-        leg = navigator.Update(new GeoPoint(0.05, 0.75, 1150), 100, kerbinRadius, 100);
+        leg = navigator.Update(new GeoPoint(0.05, 0.5, 1100), 100, kerbinRadius, 100);
         Check(leg.TargetIndex == 1, "leg becomes valid before sequencing");
         leg = navigator.Update(new GeoPoint(0, 1.01, 1200), 100, kerbinRadius, 100);
         Check(leg.TargetIndex == 2 && leg.FromId == "B" && leg.ToId == "C", "passed fix sequences leg");
         Check(navigator.PreviousLeg() && navigator.TargetIndex == 1, "manual previous leg");
         Check(navigator.NextLeg() && navigator.TargetIndex == 2, "manual next leg");
         Check(navigator.ActivateLeg(0) && navigator.TargetIndex == 0, "direct-to first waypoint selection");
+
+        var cornerPlan = new NavPlan("corner", "Corner", "Kerbin", new List<NavWaypoint>
+        {
+            new NavWaypoint("A", new GeoPoint(0, 0, 1000)),
+            new NavWaypoint("B", new GeoPoint(0, 1, 1000)),
+            new NavWaypoint("C", new GeoPoint(1, 1, 1000))
+        }, new List<ApproachDefinition>());
+        navigator.SetPlan(cornerPlan);
+        navigator.ActivateLeg(1);
+        navigator.Update(new GeoPoint(0, 0.5, 1000), 100, kerbinRadius, 100);
+        LegGuidance anticipated = navigator.Update(new GeoPoint(0, 0.75, 1000), 100, kerbinRadius, 100);
+        Check(anticipated.TargetIndex == 2 && anticipated.FromId == "B" && anticipated.ToId == "C",
+            "ordinary waypoint sequences early for standard-rate turn");
 
         var approachPlan = new NavPlan("approach", "Approach", "Kerbin", new List<NavWaypoint>
         {
