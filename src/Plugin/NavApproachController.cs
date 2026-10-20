@@ -36,6 +36,7 @@ namespace AtmosphereAutopilotNav.Plugin
         private bool lateralWasActive;
         private bool verticalWasActive;
         private bool approachWarningShown;
+        private bool glideslopeCaptureWarningShown;
         private bool savedThrustSettings;
         private bool savedUsePid;
         private bool savedUseBrakes;
@@ -406,7 +407,9 @@ namespace AtmosphereAutopilotNav.Plugin
                 glidepathCorrection *= glidepathCorrection < 0 ? 1.2 : 0.8;
                 targetVerticalSpeed = NavigationMath.Clamp(lastLeg.PathSlope * speed + glidepathCorrection,
                     -0.2 * speed, 0.2 * speed);
+                UpdateGlideslopeCaptureWarning(speed);
             }
+            else glideslopeCaptureWarningShown = false;
             if (verticalMode == VerticalGuidanceMode.Altitude)
                 targetVerticalSpeed = NavigationMath.Clamp((altitudeMeters - vessel.altitude) / 15.0,
                     -0.2 * speed, 0.2 * speed);
@@ -424,47 +427,33 @@ namespace AtmosphereAutopilotNav.Plugin
             verticalWasActive = verticalActive;
             bool bankMode = lateralMode == LateralGuidanceMode.Bank;
             bool pitchMode = verticalMode == VerticalGuidanceMode.Pitch;
-            if ((bankMode || pitchMode) && (lateralActive || verticalActive))
+            if (lateralActive && verticalActive)
                 ApplyIndependentModes(state, commandedTrack, commandedVerticalSpeed, speed, up,
                     actualVerticalSpeed, bankMode, pitchMode);
-            else if (lateralActive && verticalActive)
-                ApplyDirector(state, commandedTrack, commandedVerticalSpeed, speed);
             else if (lateralActive)
                 ApplyLateralOnly(state, commandedTrack, speed, up);
             else
                 ApplyVerticalOnly(state, commandedVerticalSpeed, speed, up, actualVerticalSpeed);
             if (speedEnabled) ApplyThrottleGuidance(state);
-            status = string.Format(CultureInfo.InvariantCulture, "{0} {1:F0} deg; {2} {3:F1} m/s",
-                lateralMode, commandedTrack, verticalMode, commandedVerticalSpeed);
+            status = string.Format(CultureInfo.InvariantCulture, "{0} {1:F0} deg; {2} {3:F1} m/s{4}",
+                lateralMode, commandedTrack, verticalMode, commandedVerticalSpeed,
+                glideslopeCaptureWarningShown ? "; ABOVE GS CAPTURE" : "");
             WriteTelemetry(state, speed, actualVerticalSpeed);
         }
-        private void ApplyDirector(FlightCtrlState state, double trackDegrees, double verticalSpeed, double speed)
+
+        private void UpdateGlideslopeCaptureWarning(double speed)
         {
-            Vector3d radial = vessel.GetWorldPos3D() - vessel.mainBody.position;
-            Vector3d up = radial.normalized;
-            Vector3d north = Vector3d.Exclude(up, vessel.mainBody.RotationAxis).normalized;
-            Vector3d east = Vector3d.Cross(up, north).normalized;
-            if (north.sqrMagnitude < 0.5) throw new InvalidOperationException("Navigation frame unavailable near pole");
-            verticalSpeed = NavigationMath.Clamp(verticalSpeed, -0.2 * speed, 0.2 * speed);
-            double radians = trackDegrees * Math.PI / 180.0;
-            Vector3d horizontal = north * Math.Cos(radians) + east * Math.Sin(radians);
-            double horizontalSpeed = Math.Sqrt(Math.Max(1, speed * speed - verticalSpeed * verticalSpeed));
-            Vector3d desiredVelocity = horizontal * horizontalSpeed + up * verticalSpeed;
-            Vector3d actualHorizontal = Vector3d.Exclude(up, model.surface_v);
-            Vector3d levelAcceleration = -up * actualHorizontal.sqrMagnitude / radial.magnitude;
-            ControlUtils.neutralize_user_input(state, PITCH);
-            ControlUtils.neutralize_user_input(state, ROLL);
-            ControlUtils.neutralize_user_input(state, YAW);
-            bool oldInverted = director.allow_spine_down;
-            try
+            if (navigator.Plan == null || navigator.Complete || !hasLeg || speed < 1)
             {
-                director.allow_spine_down = false;
-                director.ApplyControl(state, desiredVelocity, levelAcceleration);
+                glideslopeCaptureWarningShown = false;
+                return;
             }
-            finally
-            {
-                director.allow_spine_down = oldInverted;
-            }
+            double timeToTarget = lastLeg.DistanceToTargetMeters / speed;
+            bool outsideEnvelope = timeToTarget > 1 &&
+                (lastLeg.TargetAltitudeMeters - vessel.altitude) / timeToTarget < -0.2 * speed;
+            if (outsideEnvelope && !glideslopeCaptureWarningShown)
+                MessageManager.post_status_message("Above glideslope capture envelope; descend earlier or go around");
+            glideslopeCaptureWarningShown = outsideEnvelope;
         }
         private void ReloadPlans()
         {

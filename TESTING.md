@@ -1,4 +1,4 @@
-# AtmosphereAutopilot NAV/ILS 0.6.3 guidance-response test
+# AtmosphereAutopilot NAV/ILS 0.6.4 bank-limit and GS-capture test
 
 Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **NAV / ILS** in AtmosphereAutopilot.
 
@@ -35,7 +35,7 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 3. Use direct-to on a later ordinary waypoint and confirm it captures from the current position without a hard roll.
 4. Verify all waypoint rows are visible without scrollbars, aligned in compact green fields, and every direct-to button works. Test both KSC circuits and a longer plan. Very long plans can exceed screen height; report any such plan for the next layout pass.
 5. At an ordinary circuit corner, confirm the active leg advances early enough to begin a standard-rate turn rather than waiting until the aircraft is within 750 m of the fix. FAF, runway, and stop legs must still remain protected from early sequencing.
-6. While coupled NAV and GS are active, confirm the aircraft turns with the normal AA director authority. The telemetry should show commanded track converging promptly instead of remaining 15-30 degrees behind through the entire turn.
+6. While coupled NAV and GS are active, confirm NAV converges without exceeding approximately 25 degrees of bank. GS must retain vertical control during the turn.
 
 ## Individual control modes
 
@@ -49,10 +49,11 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 ## ILS and handoff
 
 1. Load `KSC ILS 09`. Use `D->` to select the IAF or FAF as appropriate for the aircraft's position, then select `NAV`.
-2. Select `GS` only when the active leg has vertical guidance. GS should follow the altitude profile stored in the same Kramax leg; there is no separate LOC mode. NAV/GS deviation bars appear around the navball when those modes are selected.
+2. Select `GS` before the planned descent begins and only when the active leg has vertical guidance. GS should follow the altitude profile stored in the same Kramax leg; there is no separate LOC mode. NAV/GS deviation bars appear around the navball when those modes are selected.
 3. On the FAF-to-runway leg, NAV supplies lateral guidance and GS supplies vertical guidance. The active row should be the runway/Final waypoint.
 4. At 150 m radar altitude, NAV, GS, and Land speed control should disengage together and ordinary AA FBW should resume. Repeat once without GS to confirm NAV-only final guidance also hands off. Complete flare, touchdown, braking, and thrust-reverser operation manually.
 5. Watch `vdev` in the log while capturing GS. Positive values mean the aircraft is above the path and negative values mean it is below. The error should move decisively toward zero with no sustained lazy offset.
+6. Repeat once by engaging GS deliberately too high and close to the next waypoint. The status should append `ABOVE GS CAPTURE`, and a main-screen message should advise descending earlier or going around. The controller must retain its safe descent limit rather than diving steeply enough to force an unsafe intercept.
 
 ## Other checks
 
