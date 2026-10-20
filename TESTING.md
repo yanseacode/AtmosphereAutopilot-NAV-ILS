@@ -1,4 +1,4 @@
-# AtmosphereAutopilot NAV/ILS 0.6.1 interface and plan-store test
+# AtmosphereAutopilot NAV/ILS 0.6.2 interface and plan-store test
 
 Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **NAV / ILS** in AtmosphereAutopilot.
 
@@ -17,7 +17,7 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 
 1. Open **Load/Store**. The manager should list the same Kerbin plans as Kramax, including `KSC ILS 09`, `KSC DEP 09`, and both KSC circuit plans. The separate `KSC Development Circuit` entry is temporary native test data.
 2. Load the same plan in each controller, one controller at a time. Confirm the plan name, description, waypoint order, altitude, heading, distance, and IAF/FAF/Final/RW labels agree.
-3. In Navigation, click `D->` on an ordinary waypoint. It should become `Active` and NAV should fly from the aircraft's present position to that waypoint.
+3. In AtmosphereAutopilot NAV/ILS, click `D->` on an ordinary waypoint. It should become `Active` and NAV should fly from the aircraft's present position to that waypoint.
 4. Click `D->` on a FAF or runway waypoint. The active course must remain the published preceding-waypoint-to-selected-waypoint leg. This is required for ILS alignment.
 
 ## Plan update and rename
@@ -58,7 +58,7 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 - Briefly test 2x physics warp in cruise and 4x only if stable; return to 1x for the approach.
 - A separate CDI mod will be tested in a later compatibility phase.
 
-Log lines beginning with `[Navigation]` report the active plan/leg, modes, commanded and actual track and vertical speed, airspeed, cross-track error, controls, and throttle.
+Log lines beginning with `[AtmosphereAutopilot NAV/ILS]` report the active plan/leg, modes, commanded and actual track and vertical speed, airspeed, cross-track error, controls, and throttle.
 
 ## 0.5.3 visual and indicator checks
 
@@ -68,9 +68,9 @@ Log lines beginning with `[Navigation]` report the active plan/leg, modes, comma
 - Select NAV: horizontal deviation bar appears above the navball. Select GS: vertical bar appears on its right. Changing to another mode hides the corresponding bar; sections need not be engaged to view deviations.
 - Fly right of the planned course: the cyan diamond should move left. Fly above the glidepath: the vertical diamond should move down. Signed labels report aircraft displacement in metres.
 - 25 m deviation is half scale, 100 m full scale; beyond 100 m the diamond stays at the edge and turns red. Without a usable leg/path, display `---` without a diamond.
-- Change resolution/UI scale or move the navball: bars should remain aligned. Hiding the Navigation window or game UI hides the overlay.
+- Change resolution/UI scale or move the navball: bars should remain aligned. Hiding the AtmosphereAutopilot NAV/ILS window or game UI hides the overlay.
 - Verify viewing the bars with guidance off does not advance the active waypoint or capture a direct-to origin. Compare the display against Kramax with the same selected leg.
 
 ## Indicator dragging (0.5.3)
 
-Left-click and drag either visible deviation bar: both bars move together and retain their offset when switching modes or hiding/showing Navigation during the flight. Release outside the original bar to verify capture ends correctly. Hiding the UI mid-drag must release the mouse. The navball and empty space between the bars remain clickable. Repeat with NAV only, GS only, and both selected. Position is retained for this controller instance, not saved across game restarts.
+Left-click and drag either visible deviation bar: both bars move together and retain their offset when switching modes or hiding/showing AtmosphereAutopilot NAV/ILS during the flight. Release outside the original bar to verify capture ends correctly. Hiding the UI mid-drag must release the mouse. The navball and empty space between the bars remain clickable. Repeat with NAV only, GS only, and both selected. Position is retained for this controller instance, not saved across game restarts.

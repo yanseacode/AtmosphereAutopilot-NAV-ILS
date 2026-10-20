@@ -4,9 +4,9 @@
 
 The `AtmosphereAutopilotNav` source was written for this project as an independent AtmosphereAutopilot extension. It uses public KSP and AtmosphereAutopilot APIs. AtmosphereAutopilot is an external GPLv3-or-later dependency and is not copied into this source tree.
 
-The local `NavIlsIntegration` prototype demonstrated desired runtime behavior but is not a source dependency. The reader independently converts the installed Kramax ConfigNode flight-plan format into Navigation's internal model and does not reference the Kramax assembly.
+The local `NavIlsIntegration` prototype demonstrated desired runtime behavior but is not a source dependency. The reader independently converts the installed Kramax ConfigNode flight-plan format into AtmosphereAutopilot NAV/ILS's internal model and does not reference the Kramax assembly.
 
-## Navigation formulas
+## AtmosphereAutopilot NAV/ILS formulas
 
 The core uses standard spherical-navigation relationships: haversine angular distance, initial great-circle bearing, signed cross-track distance, along-track distance, bounded intercept angle, and a geometric constant-angle glidepath. Formula implementations are independently written and covered by deterministic tests.
 
@@ -27,4 +27,4 @@ Before release, every generated or permitted dataset must record:
 
 ## Deviation display (0.5.2)
 
-The overlay is an independently written renderer using local Kramax CDI.cs as a behavioral reference: navball-relative geometry, signed square-root scale (100 m full scale), colors, ticks and marker dimensions. No Kramax code, textures, or assembly are bundled. Plan preview uses Navigation's own geometry and cannot mutate the live navigator.
+The overlay is an independently written renderer using local Kramax CDI.cs as a behavioral reference: navball-relative geometry, signed square-root scale (100 m full scale), colors, ticks and marker dimensions. No Kramax code, textures, or assembly are bundled. Plan preview uses AtmosphereAutopilot NAV/ILS's own geometry and cannot mutate the live navigator.

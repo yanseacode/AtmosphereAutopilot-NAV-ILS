@@ -1,6 +1,6 @@
 # Native flight-plan format
 
-Navigation uses KSP `ConfigNode` files under `GameData/AtmosphereAutopilotNav/FlightPlans`. The format is versioned so it can evolve alongside Kramax-compatible plan loading.
+AtmosphereAutopilot NAV/ILS uses KSP `ConfigNode` files under `GameData/AtmosphereAutopilotNav/FlightPlans`. The format is versioned so it can evolve alongside Kramax-compatible plan loading.
 
 ```text
 AA_NAV_PLAN

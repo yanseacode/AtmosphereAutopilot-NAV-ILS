@@ -1,4 +1,4 @@
-# Kramax compatibility target for Navigation
+# Kramax compatibility target for AtmosphereAutopilot NAV/ILS
 
 The release target is a familiar replacement for Kramax AutoPilot's airplane workflow, backed by AtmosphereAutopilot control laws.
 

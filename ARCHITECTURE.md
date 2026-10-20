@@ -2,7 +2,7 @@
 
 ## Decision
 
-Navigation is an independent AtmosphereAutopilot add-on licensed under GPLv3 or later. It registers a new AA high-level autopilot and uses AA's existing per-vessel flight model, director, adaptive axis controllers, standard fly-by-wire controller, and non-PID speed controller.
+AtmosphereAutopilot NAV/ILS is an independent AtmosphereAutopilot add-on licensed under GPLv3 or later. It registers a new AA high-level autopilot and uses AA's existing per-vessel flight model, director, adaptive axis controllers, standard fly-by-wire controller, and non-PID speed controller.
 
 It does not modify AtmosphereAutopilot or link to the KramaxAutoPilot assembly. During development it can read an installed Kramax flight-plan file directly so both autopilots can be compared with identical data.
 
@@ -12,13 +12,13 @@ AtmosphereAutopilot is GPLv3-or-later. KramaxAutoPilot declares CC BY-NC-SA 4.0 
 
 The current maintainer has indicated that flight-plan reuse can be permitted. Before a public release bundles that data, retain a written grant covering redistribution, modification, attribution, and the intended release license. Until that is recorded, public packages should ship the compatible reader without Kramax's plan collection.
 
-Public Navigation releases must follow these rules:
+Public AtmosphereAutopilot NAV/ILS releases must follow these rules:
 
 1. Do not copy Kramax or Pilot Assistant source. Bundle flight-plan data only under the maintainer's explicit written permission and required attribution.
 2. Do not add a Kramax assembly reference, reflection adapter, or bundled compatibility bridge. Reading the documented ConfigNode plan format is an optional data compatibility feature.
 3. Derive algorithms from public aviation geometry, KSP APIs, and independently written requirements.
 4. Record the provenance and permission for every bundled airport and runway dataset.
-5. Keep AtmosphereAutopilot as an external dependency and distribute Navigation source under GPLv3-or-later.
+5. Keep AtmosphereAutopilot as an external dependency and distribute AtmosphereAutopilot NAV/ILS source under GPLv3-or-later.
 
 ## Component boundaries
 
@@ -30,7 +30,7 @@ Public Navigation releases must follow these rules:
 
 ## Runtime ownership
 
-Only one AA high-level controller is active. When Navigation is selected, it owns the AA control callback. With no guidance axis selected it delegates attitude control to Standard Fly-By-Wire. Mode capture begins from current track or vertical speed and uses ordinary command-rate limits; there is no cross-autopilot handoff. Disabling a guidance axis returns that axis to AA fly-by-wire inside the same controller.
+Only one AA high-level controller is active. When AtmosphereAutopilot NAV/ILS is selected, it owns the AA control callback. With no guidance axis selected it delegates attitude control to Standard Fly-By-Wire. Mode capture begins from current track or vertical speed and uses ordinary command-rate limits; there is no cross-autopilot handoff. Disabling a guidance axis returns that axis to AA fly-by-wire inside the same controller.
 
 The first public version ends automatic guidance above the flare and leaves throttle, flare, touchdown, braking, steering, and thrust reversers to the player. Physics warp support is a release requirement: 2x minimum and 4x target, after controller behavior is measured at each rate.
 

@@ -317,8 +317,8 @@ namespace AtmosphereAutopilotNav.Plugin
             thrust.Activate();
             ReloadPlans();
             lastTelemetryTime = 0;
-            Debug.Log("[Navigation] 0.5.0 control-modes controller activated; plans=" + plans.Count);
-            MessageManager.post_status_message("Navigation enabled in FBW standby");
+            Debug.Log("[AtmosphereAutopilot NAV/ILS] 0.6.2 controller activated; plans=" + plans.Count);
+            MessageManager.post_status_message("AtmosphereAutopilot NAV/ILS enabled in FBW standby");
         }
         protected override void OnDeactivate()
         {
@@ -339,15 +339,15 @@ namespace AtmosphereAutopilotNav.Plugin
                 thrust.use_breaks = savedUseBrakes;
                 savedThrustSettings = false;
             }
-            MessageManager.post_status_message("Navigation disabled");
+            MessageManager.post_status_message("AtmosphereAutopilot NAV/ILS disabled");
         }
         public override void ApplyControl(FlightCtrlState state)
         {
             try { ApplyControlSafe(state); }
             catch (Exception ex)
             {
-                Debug.LogError("[Navigation] Guidance fault: " + ex);
-                DisengageGuidance("Navigation fault; FBW restored");
+                Debug.LogError("[AtmosphereAutopilot NAV/ILS] Guidance fault: " + ex);
+                DisengageGuidance("AtmosphereAutopilot NAV/ILS fault; FBW restored");
                 flyByWire.ApplyControl(state);
             }
         }
@@ -603,7 +603,7 @@ namespace AtmosphereAutopilotNav.Plugin
             if (!approachWarningShown && radarAltitude <= 300)
             {
                 approachWarningShown = true;
-                ScreenMessages.PostScreenMessage("Navigation: prepare for manual landing handoff.", 8f,
+                ScreenMessages.PostScreenMessage("AtmosphereAutopilot NAV/ILS: prepare for manual landing handoff.", 8f,
                     ScreenMessageStyle.UPPER_CENTER);
             }
             return radarAltitude <= 150;
@@ -626,7 +626,7 @@ namespace AtmosphereAutopilotNav.Plugin
             lastTelemetryTime = now;
             string plan = navigator.Plan == null ? "none" : navigator.Plan.Id;
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[Navigation] t={0:F1} plan={1} leg={2} modes={3}/{4}/{5} trackCmd={6:F2} track={7:F2} vsCmd={8:F2} vs={9:F2} speedCmd={10:F1} speed={11:F1} xtk={12:F1} dthr={13:F1} roll={14:F3} pitch={15:F3} yaw={16:F3} throttle={17:F3}",
+                "[AtmosphereAutopilot NAV/ILS] t={0:F1} plan={1} leg={2} modes={3}/{4}/{5} trackCmd={6:F2} track={7:F2} vsCmd={8:F2} vs={9:F2} speedCmd={10:F1} speed={11:F1} xtk={12:F1} dthr={13:F1} roll={14:F3} pitch={15:F3} yaw={16:F3} throttle={17:F3}",
                 now, plan, navigator.TargetIndex, lateralMode, verticalMode, speedEnabled,
                 commandedTrack, CurrentTrackDegrees(), commandedVerticalSpeed, actualVerticalSpeed,
                 commandedSpeedMetersPerSecond, speed, hasLeg ? lastLeg.CrossTrackMeters : 0,

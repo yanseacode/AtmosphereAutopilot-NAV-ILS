@@ -24,7 +24,7 @@ Copy-Item -LiteralPath "$PSScriptRoot\README.md" -Destination $modRoot
 Copy-Item -LiteralPath "$PSScriptRoot\TESTING.md" -Destination $modRoot
 Copy-Item -LiteralPath "$PSScriptRoot\PROVENANCE.md" -Destination $modRoot
 
-$zip = Join-Path $artifactRoot 'AtmosphereAutopilot-NAV-ILS-0.6.1-dev.zip'
+$zip = Join-Path $artifactRoot 'AtmosphereAutopilot-NAV-ILS-0.6.2-dev.zip'
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -LiteralPath (Join-Path $stage 'GameData') -DestinationPath $zip -CompressionLevel Optimal
 Write-Host "Created $zip"
