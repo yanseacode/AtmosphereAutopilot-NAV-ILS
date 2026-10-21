@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using AtmosphereAutopilot;
 using AtmosphereAutopilotNav.Core;
 using AtmosphereAutopilotNav.Ksp;
@@ -23,6 +24,7 @@ namespace AtmosphereAutopilotNav.Plugin
         private YawAngularVelocityController yaw;
         private PitchAoAController pitchAoA;
         private SideslipController sideslip;
+        private IWindow craftSettingsWindow;
         private IReadOnlyList<NavPlan> plans = new List<NavPlan>();
         private readonly PlanNavigator navigator = new PlanNavigator();
         private readonly List<string> loadErrors = new List<string>();
@@ -110,6 +112,13 @@ namespace AtmosphereAutopilotNav.Plugin
             yaw = (YawAngularVelocityController)modules[typeof(YawAngularVelocityController)];
             pitchAoA = (PitchAoAController)modules[typeof(PitchAoAController)];
             sideslip = (SideslipController)modules[typeof(SideslipController)];
+            AutopilotModule topManager;
+            if (modules.TryGetValue(typeof(TopModuleManager), out topManager))
+            {
+                FieldInfo settingsField = typeof(TopModuleManager).GetField("settings_wnd",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                if (settingsField != null) craftSettingsWindow = settingsField.GetValue(topManager) as IWindow;
+            }
         }
         private void ApplyIndependentModes(FlightCtrlState state, double trackDegrees, double verticalSpeed,
             double speed, Vector3d up, double actualVerticalSpeed, bool bankMode, bool pitchMode)
@@ -631,12 +640,16 @@ namespace AtmosphereAutopilotNav.Plugin
             close_button();
             GUILayout.BeginVertical(GUILayout.Width(380));
             GUILayout.Label("Status: " + status, greenLabelStyle);
+            DrawControllerShortcuts();
+            GUILayout.Space(5);
+            GUILayout.Box(GUIContent.none, GUI.skin.button, GUILayout.Height(8), GUILayout.ExpandWidth(true));
             DrawLateralControls();
             DrawVerticalControls();
             DrawSpeedControls();
             DrawPlanControls();
             DrawApproachSpeeds();
             GUILayout.EndVertical();
+            DrawTooltip();
             GUI.DragWindow();
         }
         private void EnsureStyles()
@@ -689,6 +702,47 @@ namespace AtmosphereAutopilotNav.Plugin
             bool pressed = GUILayout.Button(label, selected ? selectedModeStyle : modeStyle, options);
             GUI.backgroundColor = old;
             return pressed;
+        }
+
+        private void DrawControllerShortcuts()
+        {
+            GUILayout.BeginHorizontal();
+            DrawControllerShortcut("P", "Pitch angular velocity controller", pitch);
+            DrawControllerShortcut("R", "Roll angular velocity controller", roll);
+            DrawControllerShortcut("Y", "Yaw angular velocity controller", yaw);
+            DrawControllerShortcut("S", "Sideslip controller", sideslip);
+            DrawControllerShortcut("T", "Prograde thrust controller", thrust);
+            GUILayout.FlexibleSpace();
+            DrawControllerShortcut("D", "Director controller", director);
+            DrawControllerShortcut("C", "Craft settings", craftSettingsWindow);
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawControllerShortcut(string label, string tooltip, IWindow target)
+        {
+            bool available = target != null;
+            bool shown = available && target.IsShown();
+            bool oldEnabled = GUI.enabled;
+            GUI.enabled = available;
+            if (GUILayout.Button(new GUIContent(label, tooltip), shown ? selectedModeStyle : modeStyle,
+                GUILayout.Width(34), GUILayout.Height(24)))
+            {
+                if (shown) target.UnShowGUI();
+                else target.ShowGUI();
+            }
+            GUI.enabled = oldEnabled;
+        }
+
+        private void DrawTooltip()
+        {
+            if (Event.current.type != EventType.Repaint || string.IsNullOrEmpty(GUI.tooltip)) return;
+            GUIContent content = new GUIContent(GUI.tooltip);
+            Vector2 size = GUI.skin.box.CalcSize(content);
+            size.x = Math.Min(size.x + 12, 280);
+            size.y += 6;
+            Vector2 mouse = Event.current.mousePosition;
+            float left = Math.Min(mouse.x + 12, 380 - size.x);
+            GUI.Box(new Rect(Math.Max(0, left), mouse.y + 18, size.x, size.y), content);
         }
         // Drag upward to hide the mode row, downward to reveal it. Targets stay accessible.
         private void Separator(ref bool modesVisible, int hint)
@@ -776,7 +830,7 @@ namespace AtmosphereAutopilotNav.Plugin
             }
             if (selectedLateralMode == LateralGuidanceMode.Bank)
                 DrawTargetRow("Target Bank:", ref bankText, 1, v => bankDegrees = NavigationMath.Clamp(v, -85, 85), CurrentBankDegrees());
-            else
+            else if (selectedLateralMode == LateralGuidanceMode.Heading)
                 DrawTargetRow("Target Hdg:", ref headingText, 5, v => headingDegrees = NavigationMath.Wrap360(v), CurrentTrackDegrees());
             Separator(ref rollModesVisible, 701);
         }
@@ -1015,7 +1069,8 @@ namespace AtmosphereAutopilotNav.Plugin
             int signature = (rollModesVisible ? 1 : 0) | (verticalModesVisible ? 2 : 0) |
                 (throttleModesVisible ? 4 : 0) | (flightPlanExpanded ? 8 : 0) |
                 (approachSpeedsExpanded ? 16 : 0) |
-                ((navigator.Plan == null ? 0 : navigator.Plan.Waypoints.Count + 1) << 5);
+                ((navigator.Plan == null ? 0 : navigator.Plan.Waypoints.Count + 1) << 5) |
+                (selectedLateralMode == LateralGuidanceMode.Nav ? 1 << 20 : 0);
             if (signature != layoutSignature)
             {
                 window.width = 0;

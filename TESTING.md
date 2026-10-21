@@ -1,17 +1,19 @@
-# AtmosphereAutopilot NAV/ILS 0.6.4 bank-limit and GS-capture test
+# AtmosphereAutopilot NAV/ILS 0.6.5 controller-shortcut test
 
 Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **NAV / ILS** in AtmosphereAutopilot.
 
 ## Main interface
 
-1. Confirm the main window is approximately as wide as Kramax and contains the three long section buttons: `Roll`, `Vertical`, and `Auto-Throttle`.
-2. Confirm the mode rows show `Bank / Hdg / NAV`, `Pitch / VSpd / Alt / RAlt / GS`, and `Vel / Acc / Land`.
-3. Confirm stacked `+` / `-` buttons change only the pending field: Bank/Pitch 1, Hdg 5, VSpd/Vel/Acc 10, Alt 500, RAlt 100, approach speeds 5. Repeat a click to verify increments accumulate.
-4. With a mode active, type or increment a target and verify the aircraft continues using the previous target until its left-hand target button is clicked. Check approach speeds the same way. Switching modes must not apply pending edits.
-5. Confirm `Status:` precedes the status, section labels are white, and enabled sections include `(Active)`.
-6. Drag each control section's bottom bar upward to hide its mode buttons; drag downward to reveal them. Targets remain accessible and guidance stays engaged. Confirm the window still drags and closes after resizing.
-7. Every displayed mode is connected. Selecting a mode while its section is active should change mode without disengaging the section.
-8. Confirm `Flight Plan`, `Load/Store`, the plan information and waypoint table, and the collapsible `Approach Speeds` panel fit without clipping.
+1. Confirm the shortcut row appears below Status. P/R/Y/S/T open the AA Pitch, Roll, Yaw, Sideslip, and Prograde Thrust controller windows; D opens Director; C opens Craft Settings. Each button should turn green while its window is open, close that window when clicked again, and display its full name promptly when hovered.
+2. Select `NAV` and confirm the complete Target Hdg row disappears. It should return in `Hdg`, while `Bank` shows only Target Bank.
+3. Confirm the main window is approximately as wide as Kramax and contains the three long section buttons: `Roll`, `Vertical`, and `Auto-Throttle`.
+4. Confirm the mode rows show `Bank / Hdg / NAV`, `Pitch / VSpd / Alt / RAlt / GS`, and `Vel / Acc / Land`.
+5. Confirm stacked `+` / `-` buttons change only the pending field: Bank/Pitch 1, Hdg 5, VSpd/Vel/Acc 10, Alt 500, RAlt 100, approach speeds 5. Repeat a click to verify increments accumulate.
+6. With a mode active, type or increment a target and verify the aircraft continues using the previous target until its left-hand target button is clicked. Check approach speeds the same way. Switching modes must not apply pending edits.
+7. Confirm `Status:` precedes the status, section labels are white, and enabled sections include `(Active)`.
+8. Drag each control section's bottom bar upward to hide its mode buttons; drag downward to reveal them. Targets remain accessible and guidance stays engaged. Confirm the window still drags and closes after resizing.
+9. Every displayed mode is connected. Selecting a mode while its section is active should change mode without disengaging the section.
+10. Confirm `Flight Plan`, `Load/Store`, the plan information and waypoint table, and the collapsible `Approach Speeds` panel fit without clipping.
 
 ## Kramax plan compatibility
 
