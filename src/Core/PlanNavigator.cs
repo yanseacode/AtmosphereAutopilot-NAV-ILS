@@ -159,20 +159,9 @@ namespace AtmosphereAutopilotNav.Core
                 double distance = NavigationMath.DistanceMeters(position, to.Position, bodyRadiusMeters);
                 double course = NavigationMath.InitialBearingDegrees(fromPosition, to.Position);
                 if (alongTrack > 0 && alongTrack < legLength) legWasValid = true;
-                bool protectedApproachLeg = to.Role == WaypointRole.FinalApproachFix ||
-                    to.Role == WaypointRole.Runway || to.Role == WaypointRole.Stop;
                 bool passedFix = alongTrack >= legLength - 10;
-                bool timeToTurn = false;
-                if (!protectedApproachLeg && TargetIndex < Plan.Waypoints.Count - 1)
-                {
-                    NavWaypoint after = Plan.Waypoints[TargetIndex + 1];
-                    double nextCourse = NavigationMath.InitialBearingDegrees(to.Position, after.Position);
-                    double leadDistance = NavigationMath.TurnAnticipationDistanceMeters(
-                        groundSpeedMetersPerSecond, course, nextCourse);
-                    timeToTurn = distance <= leadDistance;
-                }
                 if (advance && legWasValid && TargetIndex < Plan.Waypoints.Count - 1 &&
-                    (passedFix || timeToTurn))
+                    passedFix)
                 {
                     TargetIndex++;
                     directStart = null;

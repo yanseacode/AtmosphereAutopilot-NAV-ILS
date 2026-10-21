@@ -40,11 +40,6 @@ internal static class NavigationCoreTests
             "right-of-course intercept turns left");
         Check(NavigationMath.SignedAngle(NavigationMath.InterceptTrackDegrees(0, leftOfNorth, 100), 0) > 0,
             "left-of-course intercept turns right");
-        Near(NavigationMath.TurnAnticipationDistanceMeters(100, 90, 0), 3000, 1e-9,
-            "standard-rate 90 degree turn anticipation");
-        Near(NavigationMath.TurnAnticipationDistanceMeters(100, 350, 10), 666.6666667, 1e-6,
-            "turn anticipation wraps north");
-
         Near(NavigationMath.GlidepathAltitudeMeters(70, 10000, 3), 70 + Math.Tan(3 * Math.PI / 180) * 10000, 1e-9, "glidepath altitude");
         Check(NavigationMath.GlidepathVerticalSpeed(600, 600, 100, 3) < 0, "on-path glideslope descends");
         Check(NavigationMath.GlidepathVerticalSpeed(600, 500, 100, 3) > NavigationMath.GlidepathVerticalSpeed(600, 700, 100, 3), "glideslope correction direction");
@@ -53,11 +48,10 @@ internal static class NavigationCoreTests
         Near(NavigationMath.SmoothTransition(10, 20, 0), 10, 1e-12, "transition start");
         Near(NavigationMath.SmoothTransition(10, 20, 1), 20, 1e-12, "transition end");
         Near(NavigationMath.SmoothTransition(10, 20, 0.5), 15, 1e-12, "transition midpoint");
-        Near(NavigationMath.SlewAngle(359, 10, 3, 1), 2, 1e-12, "heading slew across north");
-        Near(NavigationMath.SlewAngle(1, 350, 3, 1), 358, 1e-12, "heading slew left across north");
-        Near(NavigationMath.MoveTowards(-5, 5, 2, 1.5), -2, 1e-12, "linear slew");
         Check(NavigationMath.LateralAcceleration(20, 0, 100, 9.81) > 0, "right turn acceleration sign");
         Check(NavigationMath.LateralAcceleration(340, 0, 100, 9.81) < 0, "left turn acceleration sign");
+        Check(NavigationMath.LateralAcceleration(90, 0, 100, 9.81) > 9.81 * Math.Tan(25 * Math.PI / 180),
+            "direct attitude helper has no hidden 25 degree bank cap");
         Check(NavigationMath.RequiredVerticalLift(5, 0, 0, -9.81, 1, 9.81) > 9.81,
             "climb requires additional lift");
 
@@ -98,9 +92,12 @@ internal static class NavigationCoreTests
         navigator.SetPlan(cornerPlan);
         navigator.ActivateLeg(1);
         navigator.Update(new GeoPoint(0, 0.5, 1000), 100, kerbinRadius, 100);
-        LegGuidance anticipated = navigator.Update(new GeoPoint(0, 0.75, 1000), 100, kerbinRadius, 100);
-        Check(anticipated.TargetIndex == 2 && anticipated.FromId == "B" && anticipated.ToId == "C",
-            "ordinary waypoint sequences early for standard-rate turn");
+        LegGuidance beforeCorner = navigator.Update(new GeoPoint(0, 0.75, 1000), 100, kerbinRadius, 100);
+        Check(beforeCorner.TargetIndex == 1 && beforeCorner.FromId == "Present" && beforeCorner.ToId == "B",
+            "ordinary waypoint does not use a hidden standard-rate turn model");
+        LegGuidance afterCorner = navigator.Update(new GeoPoint(0, 1.01, 1000), 100, kerbinRadius, 100);
+        Check(afterCorner.TargetIndex == 2 && afterCorner.FromId == "B" && afterCorner.ToId == "C",
+            "ordinary waypoint sequences after fix passage");
 
         var approachPlan = new NavPlan("approach", "Approach", "Kerbin", new List<NavWaypoint>
         {

@@ -35,15 +35,12 @@ namespace AtmosphereAutopilotNav.Plugin
         private VerticalGuidanceMode selectedVerticalMode = VerticalGuidanceMode.VerticalSpeed;
         private ThrottleGuidanceMode selectedThrottleMode = ThrottleGuidanceMode.Velocity;
         private bool speedEnabled;
-        private bool lateralWasActive;
-        private bool verticalWasActive;
         private bool approachWarningShown;
         private bool glideslopeCaptureWarningShown;
-        private bool savedThrustSettings;
-        private bool savedUsePid;
-        private bool savedUseBrakes;
-        private bool savedPitchModeration;
-        private bool savedYawModeration;
+        private bool savedWingLeveler;
+        private bool wingLevelerOverrideActive;
+        private bool savedAaSpeedControl;
+        private bool speedControlOverrideActive;
         private double bankDegrees;
         private double headingDegrees;
         private double pitchDegrees;
@@ -138,12 +135,6 @@ namespace AtmosphereAutopilotNav.Plugin
             if (lateralMode == LateralGuidanceMode.Off) ApplyManualYaw(state);
             else ApplyGuidedYaw(state);
         }
-        private void ApplyLateralOnly(FlightCtrlState state, double trackDegrees, double speed, Vector3d up)
-        {
-            ApplyManualPitch(state);
-            ApplyTrackRoll(state, trackDegrees, speed, up);
-            ApplyGuidedYaw(state);
-        }
         private void ApplyTrackRoll(FlightCtrlState state, double trackDegrees, double speed, Vector3d up)
         {
             ControlUtils.neutralize_user_input(state, ROLL);
@@ -160,13 +151,6 @@ namespace AtmosphereAutopilotNav.Plugin
                 Vector3d.Dot(desiredRight, actualRight));
             roll.user_controlled = false;
             roll.ApplyControl(state, director.get_desired_roll_v(error));
-        }
-        private void ApplyVerticalOnly(FlightCtrlState state, double verticalSpeed, double speed, Vector3d up,
-            double actualVerticalSpeed)
-        {
-            ApplyManualRoll(state);
-            ApplyVerticalPitch(state, verticalSpeed, speed, up, actualVerticalSpeed);
-            ApplyManualYaw(state);
         }
         private void ApplyVerticalPitch(FlightCtrlState state, double verticalSpeed, double speed, Vector3d up,
             double actualVerticalSpeed)
@@ -222,7 +206,6 @@ namespace AtmosphereAutopilotNav.Plugin
         private void ApplyManualPitch(FlightCtrlState state)
         {
             pitch.user_controlled = true;
-            pitch.moderate_aoa = savedPitchModeration;
             pitch.neutral_offset = 0;
             if (flyByWire.coord_turn)
             {
@@ -239,13 +222,11 @@ namespace AtmosphereAutopilotNav.Plugin
         {
             if (flyByWire.rocket_mode)
             {
-                yaw.moderate_aoa = savedYawModeration;
                 yaw.user_controlled = true;
                 yaw.ApplyControl(state, 0);
             }
             else
             {
-                yaw.moderate_aoa = savedYawModeration;
                 sideslip.user_controlled = true;
                 sideslip.ApplyControl(state, 0, 0);
             }
@@ -264,6 +245,60 @@ namespace AtmosphereAutopilotNav.Plugin
                 yaw.moderate_aoa = true;
                 sideslip.user_controlled = false;
                 sideslip.ApplyControl(state, 0, 0);
+            }
+        }
+        private void ApplyDirector(FlightCtrlState state, double trackDegrees, double verticalSpeed, double speed)
+        {
+            Vector3d radial = vessel.GetWorldPos3D() - vessel.mainBody.position;
+            Vector3d up = radial.normalized;
+            Vector3d north = Vector3d.Exclude(up, vessel.mainBody.RotationAxis).normalized;
+            Vector3d east = Vector3d.Cross(up, north).normalized;
+            if (north.sqrMagnitude < 0.5) throw new InvalidOperationException("Navigation frame unavailable near pole");
+            double radians = trackDegrees * Math.PI / 180.0;
+            Vector3d horizontal = north * Math.Cos(radians) + east * Math.Sin(radians);
+            double horizontalSpeed = Math.Sqrt(Math.Max(1, speed * speed - verticalSpeed * verticalSpeed));
+            Vector3d desiredVelocity = horizontal * horizontalSpeed + up * verticalSpeed;
+            Vector3d actualHorizontal = Vector3d.Exclude(up, model.surface_v);
+            Vector3d levelAcceleration = -up * actualHorizontal.sqrMagnitude / radial.magnitude;
+            ControlUtils.neutralize_user_input(state, PITCH);
+            ControlUtils.neutralize_user_input(state, ROLL);
+            ControlUtils.neutralize_user_input(state, YAW);
+            director.ApplyControl(state, desiredVelocity, levelAcceleration);
+        }
+
+        private void UpdateWingLevelerOverride(bool lateralGuidanceActive)
+        {
+            if (lateralGuidanceActive)
+            {
+                if (!wingLevelerOverrideActive)
+                {
+                    savedWingLeveler = roll.wing_leveler;
+                    wingLevelerOverrideActive = true;
+                }
+                roll.wing_leveler = false;
+            }
+            else if (wingLevelerOverrideActive)
+            {
+                roll.wing_leveler = savedWingLeveler;
+                wingLevelerOverrideActive = false;
+            }
+        }
+
+        private void UpdateSpeedControlOverride(bool navSpeedControlActive)
+        {
+            if (navSpeedControlActive)
+            {
+                if (!speedControlOverrideActive)
+                {
+                    savedAaSpeedControl = thrust.spd_control_enabled;
+                    speedControlOverrideActive = true;
+                }
+                thrust.spd_control_enabled = false;
+            }
+            else if (speedControlOverrideActive)
+            {
+                thrust.spd_control_enabled = savedAaSpeedControl;
+                speedControlOverrideActive = false;
             }
         }
         private void ApplyThrottleGuidance(FlightCtrlState state)
@@ -311,23 +346,18 @@ namespace AtmosphereAutopilotNav.Plugin
             verticalMode = VerticalGuidanceMode.Off;
             speedEnabled = false;
             accelerationSetpointInitialized = false;
-            lateralWasActive = verticalWasActive = false;
             approachWarningShown = false;
             hasLeg = false;
-            savedUsePid = thrust.use_pid;
-            savedUseBrakes = thrust.use_breaks;
-            savedPitchModeration = pitch.moderate_aoa;
-            savedYawModeration = yaw.moderate_aoa;
-            savedThrustSettings = true;
-            thrust.spd_control_enabled = false;
-            thrust.use_pid = false;
-            thrust.use_breaks = false;
+            savedWingLeveler = roll.wing_leveler;
+            wingLevelerOverrideActive = false;
+            savedAaSpeedControl = thrust.spd_control_enabled;
+            speedControlOverrideActive = false;
             director.Activate();
             model.Activate();
             thrust.Activate();
             ReloadPlans();
             lastTelemetryTime = 0;
-            Debug.Log("[AtmosphereAutopilot NAV/ILS] 0.6.2 controller activated; plans=" + plans.Count);
+            Debug.Log("[AtmosphereAutopilot NAV/ILS] 0.7.0 controller activated; plans=" + plans.Count);
             MessageManager.post_status_message("AtmosphereAutopilot NAV/ILS enabled in FBW standby");
         }
         protected override void OnDeactivate()
@@ -336,19 +366,12 @@ namespace AtmosphereAutopilotNav.Plugin
             verticalMode = VerticalGuidanceMode.Off;
             speedEnabled = false;
             accelerationSetpointInitialized = false;
-            thrust.spd_control_enabled = false;
+            UpdateWingLevelerOverride(false);
+            UpdateSpeedControlOverride(false);
             director.Deactivate();
             pitch.neutral_offset = 0;
-            pitch.moderate_aoa = savedPitchModeration;
-            yaw.moderate_aoa = savedYawModeration;
             thrust.Deactivate();
             model.Deactivate();
-            if (savedThrustSettings)
-            {
-                thrust.use_pid = savedUsePid;
-                thrust.use_breaks = savedUseBrakes;
-                savedThrustSettings = false;
-            }
             MessageManager.post_status_message("AtmosphereAutopilot NAV/ILS disabled");
         }
         public override void ApplyControl(FlightCtrlState state)
@@ -365,6 +388,8 @@ namespace AtmosphereAutopilotNav.Plugin
         {
             bool lateralActive = lateralMode != LateralGuidanceMode.Off;
             bool verticalActive = verticalMode != VerticalGuidanceMode.Off;
+            UpdateWingLevelerOverride(lateralActive);
+            UpdateSpeedControlOverride(speedEnabled);
             if (ApproachHandoffRequired())
             {
                 DisengageGuidance("Approach handoff height reached; FBW restored");
@@ -373,7 +398,6 @@ namespace AtmosphereAutopilotNav.Plugin
             }
             if (vessel.LandedOrSplashed || (!lateralActive && !verticalActive))
             {
-                lateralWasActive = verticalWasActive = false;
                 flyByWire.ApplyControl(state);
                 if (speedEnabled && !vessel.LandedOrSplashed)
                     ApplyThrottleGuidance(state);
@@ -427,25 +451,20 @@ namespace AtmosphereAutopilotNav.Plugin
             else if (verticalMode == VerticalGuidanceMode.RadarAltitude)
                 targetVerticalSpeed = NavigationMath.Clamp((radarAltitudeMeters - CurrentRadarAltitude()) / 15.0,
                     -0.2 * speed, 0.2 * speed);
-            double dt = TimeWarp.fixedDeltaTime;
-            if (!lateralWasActive) commandedTrack = CurrentTrackDegrees();
-            if (!verticalWasActive) commandedVerticalSpeed = actualVerticalSpeed;
-            commandedTrack = NavigationMath.SlewAngle(commandedTrack, targetTrack, 9, dt);
-            commandedVerticalSpeed = NavigationMath.MoveTowards(commandedVerticalSpeed, targetVerticalSpeed, 10, dt);
-            lateralWasActive = lateralActive;
-            verticalWasActive = verticalActive;
+            commandedTrack = targetTrack;
+            commandedVerticalSpeed = targetVerticalSpeed;
             bool bankMode = lateralMode == LateralGuidanceMode.Bank;
             bool pitchMode = verticalMode == VerticalGuidanceMode.Pitch;
-            if (lateralActive && verticalActive)
+            bool explicitAttitudeMode = bankMode || pitchMode;
+            if (explicitAttitudeMode)
                 ApplyIndependentModes(state, commandedTrack, commandedVerticalSpeed, speed, up,
                     actualVerticalSpeed, bankMode, pitchMode);
-            else if (lateralActive)
-                ApplyLateralOnly(state, commandedTrack, speed, up);
             else
-                ApplyVerticalOnly(state, commandedVerticalSpeed, speed, up, actualVerticalSpeed);
+                ApplyDirector(state, commandedTrack, commandedVerticalSpeed, speed);
             if (speedEnabled) ApplyThrottleGuidance(state);
-            status = string.Format(CultureInfo.InvariantCulture, "{0} {1:F0} deg; {2} {3:F1} m/s{4}",
-                lateralMode, commandedTrack, verticalMode, commandedVerticalSpeed,
+            status = string.Format(CultureInfo.InvariantCulture, "{0}: {1} {2:F0} deg; {3} {4:F1} m/s{5}",
+                explicitAttitudeMode ? "Direct AA" : "Director", lateralMode, commandedTrack,
+                verticalMode, commandedVerticalSpeed,
                 glideslopeCaptureWarningShown ? "; ABOVE GS CAPTURE" : "");
             WriteTelemetry(state, speed, actualVerticalSpeed);
         }
@@ -610,9 +629,9 @@ namespace AtmosphereAutopilotNav.Plugin
             lateralMode = LateralGuidanceMode.Off;
             verticalMode = VerticalGuidanceMode.Off;
             speedEnabled = false;
-            lateralWasActive = verticalWasActive = false;
             accelerationSetpointInitialized = false;
-            thrust.spd_control_enabled = false;
+            UpdateWingLevelerOverride(false);
+            UpdateSpeedControlOverride(false);
             status = message;
             MessageManager.post_status_message(message);
         }
@@ -624,15 +643,17 @@ namespace AtmosphereAutopilotNav.Plugin
             string plan = navigator.Plan == null ? "none" : navigator.Plan.Id;
             double verticalDeviation = hasLeg && lastLeg.HasVerticalGuidance
                 ? vessel.altitude - lastLeg.PathAltitudeMeters : double.NaN;
+            bool directAa = lateralMode == LateralGuidanceMode.Bank || verticalMode == VerticalGuidanceMode.Pitch;
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[AtmosphereAutopilot NAV/ILS] t={0:F1} plan={1} leg={2} modes={3}/{4}/{5} trackCmd={6:F2} track={7:F2} vsCmd={8:F2} vs={9:F2} speedCmd={10:F1} speed={11:F1} xtk={12:F1} vdev={13:F1} dthr={14:F1} roll={15:F3} pitch={16:F3} yaw={17:F3} throttle={18:F3}",
-                now, plan, navigator.TargetIndex, lateralMode, verticalMode, speedEnabled,
+                "[AtmosphereAutopilot NAV/ILS] t={0:F1} owner={1} plan={2} leg={3} modes={4}/{5}/{6} trackCmd={7:F2} track={8:F2} vsCmd={9:F2} vs={10:F2} speedCmd={11:F1} speed={12:F1} xtk={13:F1} vdev={14:F1} dthr={15:F1} roll={16:F3} pitch={17:F3} yaw={18:F3} throttle={19:F3} dirStrength={20:F2} wingLeveler={21} aaSpeed={22} speedPid={23} speedBrakes={24}",
+                now, directAa ? "DirectAA" : "Director", plan, navigator.TargetIndex, lateralMode, verticalMode, speedEnabled,
                 commandedTrack, CurrentTrackDegrees(), commandedVerticalSpeed, actualVerticalSpeed,
                 commandedSpeedMetersPerSecond, speed, hasLeg ? lastLeg.CrossTrackMeters : 0, verticalDeviation,
                 navigator.Plan != null && !navigator.Complete &&
                     navigator.Plan.Waypoints[navigator.TargetIndex].Role == WaypointRole.Runway && hasLeg
                     ? lastLeg.DistanceToTargetMeters : -1,
-                state.roll, state.pitch, state.yaw, state.mainThrottle));
+                state.roll, state.pitch, state.yaw, state.mainThrottle, director.strength, roll.wing_leveler,
+                thrust.spd_control_enabled, thrust.use_pid, thrust.use_breaks));
         }
         protected override void _drawGUI(int id)
         {
@@ -884,25 +905,21 @@ namespace AtmosphereAutopilotNav.Plugin
         {
             if (lateralMode != LateralGuidanceMode.Off) lateralMode = LateralGuidanceMode.Off;
             else lateralMode = selectedLateralMode;
-            lateralWasActive = false;
         }
         private void SelectLateral(LateralGuidanceMode mode)
         {
             selectedLateralMode = mode;
             if (lateralMode != LateralGuidanceMode.Off) lateralMode = mode;
-            lateralWasActive = false;
         }
         private void ToggleVertical()
         {
             if (verticalMode != VerticalGuidanceMode.Off) verticalMode = VerticalGuidanceMode.Off;
             else verticalMode = selectedVerticalMode;
-            verticalWasActive = false;
         }
         private void SelectVertical(VerticalGuidanceMode mode)
         {
             selectedVerticalMode = mode;
             if (verticalMode != VerticalGuidanceMode.Off) verticalMode = mode;
-            verticalWasActive = false;
         }
         private void ToggleThrottle()
         {

@@ -1,4 +1,4 @@
-# AtmosphereAutopilot NAV/ILS 0.6.5 controller-shortcut test
+# AtmosphereAutopilot NAV/ILS 0.7.0 Director-path test
 
 Deploy the test build to a separate KSP 1.12.x test installation. Leave the older Kramax/AA bridge disabled and select **NAV / ILS** in AtmosphereAutopilot.
 
@@ -36,8 +36,8 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 2. Confirm the active row changes as each fix is passed. A plan loaded while the aircraft is already beyond several fixes must not cascade through them.
 3. Use direct-to on a later ordinary waypoint and confirm it captures from the current position without a hard roll.
 4. Verify all waypoint rows are visible without scrollbars, aligned in compact green fields, and every direct-to button works. Test both KSC circuits and a longer plan. Very long plans can exceed screen height; report any such plan for the next layout pass.
-5. At an ordinary circuit corner, confirm the active leg advances early enough to begin a standard-rate turn rather than waiting until the aircraft is within 750 m of the fix. FAF, runway, and stop legs must still remain protected from early sequencing.
-6. While coupled NAV and GS are active, confirm NAV converges without exceeding approximately 25 degrees of bank. GS must retain vertical control during the turn.
+5. At an ordinary circuit corner, confirm the active leg remains selected until the aircraft passes the fix. There is no fixed 3-degree-per-second anticipation calculation in this build.
+6. While coupled NAV and GS are active, confirm the status begins `Director:` and AA's Director coordinates the turn and glide path. Bank angle should follow the aircraft's AA Director and Craft Settings configuration; there is no NAV/ILS bank-angle cap.
 
 ## Individual control modes
 
@@ -60,11 +60,14 @@ Deploy the test build to a separate KSP 1.12.x test installation. Leave the olde
 ## Other checks
 
 - With guidance modes off, confirm normal AA FBW operation.
+- While NAV lateral guidance is active, confirm `Wing leveler` and `Snap wings to level` are visibly off in AA's Roll Controller and Craft Settings. Confirm the previous setting returns when lateral guidance is disengaged.
+- While NAV/ILS speed control is active, confirm AA's built-in `Speed control` toggle is visibly off in the Prograde Thrust Controller, then returns to its prior state when NAV/ILS speed control is disengaged. PID and brake selections must not change.
+- Change Director strength, roll rate limit, or another relevant AA setting and confirm NAV behavior changes without NAV/ILS replacing the setting. The log reports `owner`, `dirStrength`, `wingLeveler`, `aaSpeed`, `speedPid`, and `speedBrakes` for correlation.
 - Test `Hdg`, `Alt`, and `Vel` Speed control separately before coupling them.
 - Briefly test 2x physics warp in cruise and 4x only if stable; return to 1x for the approach.
 - A separate CDI mod will be tested in a later compatibility phase.
 
-Log lines beginning with `[AtmosphereAutopilot NAV/ILS]` report the active plan/leg, modes, commanded and actual track and vertical speed, airspeed, cross-track error, controls, and throttle.
+Log lines beginning with `[AtmosphereAutopilot NAV/ILS]` report the active control owner, AA settings, plan/leg, modes, commanded and actual track and vertical speed, airspeed, cross-track error, controls, and throttle.
 
 ## 0.5.3 visual and indicator checks
 

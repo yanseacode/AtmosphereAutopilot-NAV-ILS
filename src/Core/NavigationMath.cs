@@ -93,17 +93,6 @@ namespace AtmosphereAutopilotNav.Core
             return Wrap360(legCourseDegrees + Math.Asin(crossVelocity / groundSpeedMetersPerSecond) * RadiansToDegrees);
         }
 
-        public static double TurnAnticipationDistanceMeters(double groundSpeedMetersPerSecond,
-            double currentCourseDegrees, double nextCourseDegrees, double turnRateDegreesPerSecond = 3)
-        {
-            if (!Finite(groundSpeedMetersPerSecond) || groundSpeedMetersPerSecond < 0 ||
-                !Finite(currentCourseDegrees) || !Finite(nextCourseDegrees) ||
-                !Finite(turnRateDegreesPerSecond) || turnRateDegreesPerSecond <= 0)
-                throw new ArgumentException("Invalid turn-anticipation input");
-            double turnDegrees = Math.Abs(SignedAngle(nextCourseDegrees, currentCourseDegrees));
-            return groundSpeedMetersPerSecond * turnDegrees / turnRateDegreesPerSecond;
-        }
-
         public static double GlidepathAltitudeMeters(double thresholdAltitudeMeters, double distanceFromThresholdMeters,
             double glideAngleDegrees)
         {
@@ -140,35 +129,14 @@ namespace AtmosphereAutopilotNav.Core
             return from + (to - from) * smooth;
         }
 
-        public static double SlewAngle(double currentDegrees, double targetDegrees, double maximumRateDegreesPerSecond,
-            double deltaTimeSeconds)
-        {
-            if (!Finite(currentDegrees) || !Finite(targetDegrees) || !Finite(maximumRateDegreesPerSecond) ||
-                maximumRateDegreesPerSecond <= 0 || !Finite(deltaTimeSeconds) || deltaTimeSeconds <= 0)
-                throw new ArgumentException("Invalid angular slew input");
-            double step = maximumRateDegreesPerSecond * deltaTimeSeconds;
-            return Wrap360(currentDegrees + Clamp(SignedAngle(targetDegrees, currentDegrees), -step, step));
-        }
-
-        public static double MoveTowards(double current, double target, double maximumRatePerSecond, double deltaTimeSeconds)
-        {
-            if (!Finite(current) || !Finite(target) || !Finite(maximumRatePerSecond) || maximumRatePerSecond <= 0 ||
-                !Finite(deltaTimeSeconds) || deltaTimeSeconds <= 0)
-                throw new ArgumentException("Invalid linear slew input");
-            double step = maximumRatePerSecond * deltaTimeSeconds;
-            return current + Clamp(target - current, -step, step);
-        }
-
         public static double LateralAcceleration(double targetTrackDegrees, double actualTrackDegrees,
             double speedMetersPerSecond, double gravityMetersPerSecondSquared)
         {
             if (!Finite(targetTrackDegrees) || !Finite(actualTrackDegrees) || !Finite(speedMetersPerSecond) ||
                 speedMetersPerSecond < 1 || !Finite(gravityMetersPerSecondSquared) || gravityMetersPerSecondSquared <= 0)
                 throw new ArgumentException("Invalid lateral acceleration input");
-            double requested = speedMetersPerSecond * SignedAngle(targetTrackDegrees, actualTrackDegrees) *
+            return speedMetersPerSecond * SignedAngle(targetTrackDegrees, actualTrackDegrees) *
                 DegreesToRadians / 5.0;
-            double limit = gravityMetersPerSecondSquared * Math.Tan(25 * DegreesToRadians);
-            return Clamp(requested, -limit, limit);
         }
 
         public static double RequiredVerticalLift(double targetVerticalSpeed, double actualVerticalSpeed,
