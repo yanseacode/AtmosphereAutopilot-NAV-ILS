@@ -28,7 +28,7 @@ AA owns the control lifecycle. With lateral and vertical guidance off, the contr
 
 Run `build.ps1` from PowerShell to build and validate the plugin. Output is written to `artifacts`. The project expects a KSP development checkout at the parent directory, including the KSP managed assemblies and AtmosphereAutopilot DLL used as compile-time references.
 
-See `TESTING.md` for the current flight test and `KRAMAX_PARITY.md` for the release checklist. Please include `KSP.log`, the aircraft used, selected plan, active modes, and reproduction steps with a flight-control report.
+See `TESTING.md` for the current flight test, `KRAMAX_PARITY.md` for the release checklist, and `CHANGELOG.md` for the development history. Please include `KSP.log`, the aircraft used, selected plan, active modes, and reproduction steps with a flight-control report.
 
 ## License and data
 
